@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=JobBot
+Comment=Job Application Bot Dashboard
+Exec=bash "/home/lalit/Projects/job-bot/start.sh"
+Icon=/home/lalit/Projects/job-bot/icon.png
+Terminal=false
+StartupNotify=true
+Categories=Utility;Network;

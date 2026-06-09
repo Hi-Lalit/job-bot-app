@@ -1,0 +1,21 @@
+2026/06/09-12:55:55.665 cfc1 Reusing MANIFEST /home/lalit/Projects/job-bot/user_data/Default/IndexedDB/https_www.naukri.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/06/09-12:55:55.666 cfc1 Recovering log #68
+2026/06/09-12:55:55.670 cfc1 Reusing old log /home/lalit/Projects/job-bot/user_data/Default/IndexedDB/https_www.naukri.com_0.indexeddb.leveldb/000068.log 
+2026/06/09-12:57:48.346 cfc1 Level-0 table #73: started
+2026/06/09-12:57:48.380 cfc1 Level-0 table #73: 1548877 bytes OK
+2026/06/09-12:57:48.384 cfc1 Delete type=0 #68
+2026/06/09-12:58:21.333 cfc1 Compacting 1@1 + 1@2 files
+2026/06/09-12:58:21.350 cfc1 Generated table #74@1: 162 keys, 48064 bytes
+2026/06/09-12:58:21.350 cfc1 Compacted 1@1 + 1@2 files => 48064 bytes
+2026/06/09-12:58:21.352 cfc1 compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/06/09-12:58:21.353 cfc1 Delete type=2 #73
+2026/06/09-12:58:21.353 cfc1 Delete type=2 #70
+2026/06/09-13:00:18.293 cfc1 Level-0 table #76: started
+2026/06/09-13:00:18.335 cfc1 Level-0 table #76: 1543577 bytes OK
+2026/06/09-13:00:18.340 cfc1 Delete type=0 #72
+2026/06/09-13:00:59.734 cfc0 Compacting 1@1 + 1@2 files
+2026/06/09-13:00:59.744 cfc0 Generated table #77@1: 165 keys, 55395 bytes
+2026/06/09-13:00:59.744 cfc0 Compacted 1@1 + 1@2 files => 55395 bytes
+2026/06/09-13:00:59.747 cfc0 compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/06/09-13:00:59.748 cfc0 Delete type=2 #74
+2026/06/09-13:00:59.748 cfc0 Delete type=2 #76

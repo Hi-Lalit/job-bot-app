@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en" style="font-size: 14px;">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobBot Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Theme Definitions ───────────────────────────────────── */
+:root {
+  /* Default Light Mode */
+  --bg:         #f4f5f7;
+  --surface:    #ffffff;
+  --border:     #e2e4e9;
+  --border2:    #d0d3db;
+  --text:       #111827;
+  --sub:        #6b7280;
+  --muted:      #9ca3af;
+  --green:      #16a34a;
+  --green-bg:   #dcfce7;
+  --blue:       #2563eb;
+  --blue-bg:    #dbeafe;
+  --orange:     #ea580c;
+  --orange-bg:  #ffedd5;
+  --purple:     #7c3aed;
+  --purple-bg:  #ede9fe;
+  --red:        #dc2626;
+  --red-bg:     #fee2e2;
+  --shadow:     0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:  0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.05);
+  
+  --current-font: 'Inter', sans-serif;
+}
+
+/* Dark Mode */
+[data-theme="dark"] {
+  --bg:         #0f172a;
+  --surface:    #1e293b;
+  --border:     #334155;
+  --border2:    #475569;
+  --text:       #f8fafc;
+  --sub:        #94a3b8;
+  --muted:      #64748b;
+  --green:      #4ade80;
+  --green-bg:   #064e3b;
+  --blue:       #60a5fa;
+  --blue-bg:    #1e3a8a;
+  --orange:     #fb923c;
+  --orange-bg:  #7c2d12;
+  --purple:     #c084fc;
+  --purple-bg:  #581c87;
+  --red:        #f87171;
+  --red-bg:     #7f1d1d;
+  --shadow:     0 2px 4px rgba(0,0,0,.3);
+}
+
+/* Cyberpunk Mode */
+[data-theme="cyberpunk"] {
+  --bg:         #1a0826;
+  --surface:    #25123e;
+  --border:     #ff007f;
+  --border2:    #00f0ff;
+  --text:       #00f0ff;
+  --sub:        #ff007f;
+  --muted:      #bd00ff;
+  --green:      #39ff14;
+  --green-bg:   #123a07;
+  --blue:       #00f0ff;
+  --blue-bg:    #042a3a;
+  --orange:     #ffb300;
+  --orange-bg:  #3a2800;
+  --purple:     #bd00ff;
+  --purple-bg:  #2a003a;
+  --red:        #ff0055;
+  --red-bg:     #3a0012;
+  --shadow:     0 0 8px rgba(255, 0, 127, 0.4);
+}
+
+/* Dracula Mode */
+[data-theme="dracula"] {
+  --bg:         #282a36;
+  --surface:    #44475a;
+  --border:     #6272a4;
+  --border2:    #bd93f9;
+  --text:       #f8f8f2;
+  --sub:        #6272a4;
+  --muted:      #ffffffcc;
+  --green:      #50fa7b;
+  --green-bg:   #1c3a27;
+  --blue:       #8be9fd;
+  --blue-bg:    #21353b;
+  --orange:     #ffb86c;
+  --orange-bg:  #3d2e20;
+  --purple:     #bd93f9;
+  --purple-bg:  #342644;
+  --red:        #ff5555;
+  --red-bg:     #3d1f1f;
+  --shadow:     0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--current-font);
+  font-size: 1rem;
+  line-height: 1.5;
+  min-height: 100vh;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow);
+}
+.header-left { display: flex; align-items: center; gap: 16px; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -.3px;
+}
+.logo-icon {
+  width: 32px; height: 32px;
+  background: var(--blue);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+}
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid var(--border2);
+  background: var(--bg);
+  color: var(--sub);
+  transition: all .3s;
+}
+.status-pill.running {
+  background: var(--green-bg);
+  border-color: #86efac;
+  color: var(--green);
+}
+.dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.dot.running { animation: blink 1.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.config-select {
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 4px 8px;
+  outline: none;
+  cursor: pointer;
+}
+
+/* ── Page layout ─────────────────────────────────────────── */
+.page { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+
+/* ── Section title ───────────────────────────────────────── */
+.section-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+/* ── Stat cards ──────────────────────────────────────────── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.scard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.scard-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+.scard-icon.g  { background: var(--green-bg); }
+.scard-icon.b  { background: var(--blue-bg); }
+.scard-icon.o  { background: var(--orange-bg); }
+.scard-icon.p  { background: var(--purple-bg); }
+.scard-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--sub);
+  margin-bottom: 4px;
+}
+.scard-value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text);
+}
+
+/* ── Controls bar ────────────────────────────────────────── */
+.controls {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ctrl-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ctrl-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--sub);
+  white-space: nowrap;
+}
+select {
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 7px 12px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+select:focus { border-color: var(--blue); }
+.divider { width: 1px; height: 28px; background: var(--border); }
+.btn {
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary { background: var(--blue); color: #fff; }
+.btn-primary:hover:not(:disabled) { opacity: 0.9; }
+.btn-primary:disabled { background: var(--muted); cursor: not-allowed; }
+.btn-danger {
+  background: var(--red-bg);
+  color: var(--red);
+  border: 1px solid var(--border2);
+}
+.btn-danger:hover:not(:disabled) { opacity: 0.9; }
+.btn-danger:disabled { opacity: .4; cursor: not-allowed; }
+.btn-ghost {
+  background: transparent;
+  color: var(--sub);
+  border: 1px solid var(--border2);
+}
+.btn-ghost:hover { background: var(--bg); color: var(--text); }
+.run-info {
+  font-size: 0.85rem;
+  color: var(--sub);
+  font-family: 'JetBrains Mono', monospace;
+  margin-left: 4px;
+}
+
+/* ── Two-col grid ────────────────────────────────────────── */
+.grid2 { display: grid; grid-template-columns: 1fr 1.5fr; gap: 16px; margin-bottom: 24px; }
+
+/* ── Card ────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.card-head {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.card-body { padding: 16px 18px; }
+
+/* ── Site bars ───────────────────────────────────────────── */
+.sbar { margin-bottom: 13px; }
+.sbar:last-child { margin-bottom: 0; }
+.sbar-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.sbar-name { font-size: 0.9rem; font-weight: 500; color: var(--text); }
+.sbar-num  { font-size: 0.9rem; font-weight: 600; font-family: 'JetBrains Mono',monospace; color: var(--sub); }
+.track { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; border: 1px solid var(--border); }
+.fill  { height: 100%; border-radius: 3px; transition: width .8s ease; }
+.fill-green  { background: var(--green); }
+.fill-blue   { background: var(--blue); }
+.fill-orange { background: var(--orange); }
+.fill-purple { background: var(--purple); }
+.fill-gray   { background: var(--muted); }
+
+/* ── Chart ───────────────────────────────────────────────── */
+.chart-area {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 110px;
+  padding-top: 8px;
+}
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.bar-col-fill {
+  width: 100%;
+  background: linear-gradient(180deg, var(--blue) 0%, var(--blue-bg) 100%);
+  border-radius: 4px 4px 0 0;
+  min-height: 3px;
+  transition: height .8s ease;
+  cursor: default;
+}
+.bar-col-fill:hover { background: var(--blue); }
+.bar-col-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ── Log ─────────────────────────────────────────────────── */
+.log-box {
+  background: #1e1e2e;
+  border-radius: 8px;
+  padding: 14px 16px;
+  height: 200px;
+  overflow-y: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  line-height: 1.8;
+}
+.log-box::-webkit-scrollbar { width: 4px; }
+.log-box::-webkit-scrollbar-thumb { background: #3a3a5c; border-radius: 2px; }
+.ll  { color: #6272a4; }
+.ls  { color: #50fa7b; }
+.le  { color: #ff5555; }
+.lw  { color: #ffb86c; }
+.li  { color: #f8f8f2; }
+
+/* ── Table ───────────────────────────────────────────────── */
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.table-head {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.table-head-title { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+.search-box {
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 7px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: 6px 12px;
+  outline: none;
+  width: 200px;
+  transition: border-color .2s;
+}
+.search-box:focus { border-color: var(--blue); }
+.search-box::placeholder { color: var(--muted); }
+.tscroll { max-height: 420px; overflow-y: auto; }
+.tscroll::-webkit-scrollbar { width: 4px; }
+.tscroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  text-align: left;
+  padding: 10px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+}
+tbody td {
+  padding: 11px 16px;
+  font-size: 0.95rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: middle;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: rgba(0, 0, 0, 0.02); }
+[data-theme="dark"] tbody tr:hover td,
+[data-theme="cyberpunk"] tbody tr:hover td,
+[data-theme="dracula"] tbody tr:hover td { background: rgba(255, 255, 255, 0.04); }
+.job-title { font-weight: 500; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.company-name { color: var(--sub); }
+.location-name { color: var(--sub); font-size: 0.85rem; }
+.time-text { color: var(--muted); font-family: 'JetBrains Mono',monospace; font-size: 0.8rem; white-space: nowrap; }
+
+/* ── Badges ──────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.badge-naukri   { background: var(--green-bg);  color: var(--green); }
+.badge-linkedin { background: var(--blue-bg);   color: var(--blue); }
+.badge-indeed   { background: var(--orange-bg); color: var(--orange); }
+.badge-other    { background: var(--bg);        color: var(--sub); border: 1px solid var(--border2); }
+.badge-applied  { background: var(--green-bg);  color: var(--green); }
+.badge-skipped  { background: var(--bg);        color: var(--sub); border: 1px solid var(--border2); }
+
+/* ── Empty state ─────────────────────────────────────────── */
+.empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.empty-icon { font-size: 2rem; margin-bottom: 8px; }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .stats { grid-template-columns: 1fr 1fr; }
+  .grid2 { grid-template-columns: 1fr; }
+  .scard-value { font-size: 1.5rem; }
+  .search-box { width: 130px; }
+  header { padding: 12px 14px; height: auto; flex-direction: column; gap: 10px; align-items: flex-start;}
+  .header-right { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+  .header-left { width: 100%; justify-content: space-between; }
+  .page { padding: 16px 12px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo">
+      <div class="logo-icon">🤖</div>
+      JobBot
+    </div>
+    <div class="status-pill idle" id="statusPill">
+      <div class="dot" id="dot"></div>
+      <span id="statusText">Idle</span>
+    </div>
+  </div>
+  
+  <div class="header-right">
+    <select id="themeFont" class="config-select" onchange="changeFont(this.value)">
+      <option value="'Inter', sans-serif">Inter</option>
+      <option value="'JetBrains Mono', monospace">JetBrains Mono 💡</option>
+      <option value="'Roboto', sans-serif">Roboto</option>
+      <option value="'Poppins', sans-serif">Poppins</option>
+      <option value="'Geist', sans-serif">Geist</option>
+      <option value="system-ui, sans-serif">System UI</option>
+    </select>
+
+    <select id="themeFontSize" class="config-select" onchange="changeFontSize(this.value)">
+      <option value="12px">Small (12px)</option>
+      <option value="14px" selected>Normal (14px)</option>
+      <option value="16px">Medium (16px)</option>
+      <option value="18px">Large (18px)</option>
+    </select>
+
+    <select id="themeMode" class="config-select" onchange="changeTheme(this.value)">
+      <option value="light">☀️ Light Theme</option>
+      <option value="dark">🌙 Dark Theme</option>
+      <option value="cyberpunk">👾 Cyberpunk</option>
+      <option value="dracula">🧛 Dracula</option>
+    </select>
+  </div>
+</header>
+
+<div class="page">
+
+  <div class="stats">
+    <div class="scard">
+      <div class="scard-icon g">📨</div>
+      <div class="scard-body">
+        <div class="scard-label">Total Applied</div>
+        <div class="scard-value" id="sTotal">—</div>
+      </div>
+    </div>
+    <div class="scard">
+      <div class="scard-icon b">📅</div>
+      <div class="scard-body">
+        <div class="scard-label">Today</div>
+        <div class="scard-value" id="sToday">—</div>
+      </div>
+    </div>
+    <div class="scard">
+      <div class="scard-icon o">📊</div>
+      <div class="scard-body">
+        <div class="scard-label">This Week</div>
+        <div class="scard-value" id="sWeek">—</div>
+      </div>
+    </div>
+    <div class="scard">
+      <div class="scard-icon p">🌐</div>
+      <div class="scard-body">
+        <div class="scard-label">Sites Active</div>
+        <div class="scard-value" id="sSites">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="ctrl-group">
+      <span class="ctrl-label">Site</span>
+      <select id="selSite">
+        <option value="naukri">Naukri</option>
+        <option value="linkedin">LinkedIn Easy Apply</option>
+        <option value="linkedin-posts">LinkedIn Posts</option>
+        <option value="indeed">Indeed</option>
+        <option value="all">All Sites</option>
+      </select>
+    </div>
+    <div class="divider"></div>
+    <button class="btn btn-primary" id="btnStart" onclick="startBot()">▶ Start Bot</button>
+    <button class="btn btn-danger"  id="btnStop"  onclick="stopBot()" disabled>■ Stop</button>
+    <div class="divider"></div>
+    <button class="btn btn-ghost" onclick="clearData()">🗑 Clear Data</button>
+    <span class="run-info" id="runMsg"></span>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-head">Applications by Site</div>
+      <div class="card-body" id="siteBars">
+        <div class="empty"><div class="empty-icon">📭</div>No data yet</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        Daily Activity
+        <span style="font-size:11px;font-weight:500;color:var(--muted)">last 14 days</span>
+      </div>
+      <div class="card-body">
+        <div class="chart-area" id="chart">
+          <div class="empty" style="width:100%"><div class="empty-icon">📈</div>No data yet</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-head">
+      <div style="display:flex;align-items:center;gap:10px">
+        Log Viewer
+        <select id="logDateSel" onchange="fetchLogs(this.value)"
+          style="font-size:12px;padding:4px 10px;border-radius:6px;
+                 background:var(--input-bg);border:1px solid var(--border2);
+                 color:var(--text);font-family:'Geist Mono',monospace;cursor:pointer;outline:none">
+          <option value="">Today</option>
+        </select>
+      </div>
+      <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px"
+        onclick="fetchLogs(document.getElementById('logDateSel').value)">↻ Refresh</button>
+    </div>
+    <div class="card-body" style="padding:14px 16px">
+      <div class="log-box" id="logBox">
+        <div class="ll">Waiting for bot to start...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Date-wise breakdown -->
+  <div class="table-card" style="margin-bottom:18px">
+    <div class="table-head">
+      <div class="table-head-title">📅 Applications by Date</div>
+      <span style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace" id="datewiseTotal"></span>
+    </div>
+    <div class="tscroll" style="max-height:300px">
+      <div id="datewiseWrap">
+        <div class="empty"><div class="empty-icon">📅</div>No data yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-head">
+      <div class="table-head-title">Recent Applications</div>
+      <input class="search-box" id="search" placeholder="🔍 Search jobs, companies..." oninput="filterTable()">
+    </div>
+    <div class="tscroll">
+      <div id="tableWrap">
+        <div class="empty"><div class="empty-icon">📋</div>No applications yet — start the bot to begin.</div>
+      </div>
+    </div>
+  </div>
+
+</div><script>
+let running = false;
+let poll, logPoll;
+let allRows = [];
+
+// ── UI Customization Handlers ──────────────────────────
+function changeTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('jobbot-theme', theme);
+}
+
+function changeFont(fontValue) {
+  document.documentElement.style.setProperty('--current-font', fontValue);
+  localStorage.setItem('jobbot-font', fontValue);
+}
+
+function changeFontSize(sizeValue) {
+  document.documentElement.style.fontSize = sizeValue;
+  localStorage.setItem('jobbot-font-size', sizeValue);
+}
+
+(function initLayoutSettings() {
+  const savedTheme = localStorage.getItem('jobbot-theme') || 'light';
+  const savedFont = localStorage.getItem('jobbot-font') || "'Inter', sans-serif";
+  const savedFontSize = localStorage.getItem('jobbot-font-size') || "14px";
+  
+  document.getElementById('themeMode').value = savedTheme;
+  changeTheme(savedTheme);
+  
+  document.getElementById('themeFont').value = savedFont;
+  changeFont(savedFont);
+  
+  document.getElementById('themeFontSize').value = savedFontSize;
+  changeFontSize(savedFontSize);
+})();
+
+// ── API calls ─────────────────────────────────────────────
+async function startBot() {
+  const site = document.getElementById('selSite').value;
+  const r = await fetch('/api/start', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({site})
+  });
+  const d = await r.json();
+  if (d.status === 'started' || d.status === 'already_running') {
+    setRunning(true);
+    document.getElementById('runMsg').textContent = `Running: ${site}  •  PID ${d.pid || '?'}`;
+  }
+}
+
+async function stopBot() {
+  await fetch('/api/stop', {method:'POST'});
+  setRunning(false);
+  document.getElementById('runMsg').textContent = 'Stopped.';
+}
+
+async function clearData() {
+  if (!confirm('Clear all application records from the database?')) return;
+  await fetch('/api/clear', {method:'DELETE'});
+  fetchStats();
+}
+
+async function fetchStats() {
+  try {
+    const r = await fetch('/api/stats');
+    const d = await r.json();
+    renderStats(d);
+  } catch(e) {}
+}
+
+async function fetchStatus() {
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    if (d.status === 'running' && !running) {
+      setRunning(true);
+      document.getElementById('runMsg').textContent = `Running  •  PID ${d.pid || '?'}`;
+    } else if (d.status !== 'running' && running) {
+      setRunning(false);
+      document.getElementById('runMsg').textContent = 'Bot finished.';
+    }
+    // Always sync button state with server truth
+    updateUI(d.status === 'running');
+  } catch(e) {}
+}
+
+async function fetchLogs(date) {
+  try {
+    const url = date ? `/api/logs?date=${date}` : '/api/logs';
+    const r = await fetch(url);
+    const d = await r.json();
+    renderLogs(d.lines, d.current);
+    // Populate date dropdown with available log files
+    const sel = document.getElementById('logDateSel');
+    const curVal = sel.value;
+    sel.innerHTML = '<option value="">Today</option>';
+    (d.dates || []).forEach(dt => {
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+      if (dt === todayStr) return; // skip today, already shown as default
+      const opt = document.createElement('option');
+      opt.value = dt;
+      opt.textContent = dt;
+      if (dt === curVal || dt === date) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  } catch(e) {}
+}
+
+// ── Render ────────────────────────────────────────────────
+function renderStats(d) {
+  set('sTotal', d.total);
+  set('sToday', d.today);
+  set('sWeek',  d.week);
+  set('sSites', d.by_site.length);
+
+  const max = Math.max(...d.by_site.map(s => s.count), 1);
+  const barsEl = document.getElementById('siteBars');
+  if (!d.by_site.length) {
+    barsEl.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>No data yet</div>';
+  } else {
+    const colors = ['fill-green','fill-blue','fill-orange','fill-purple','fill-gray'];
+    barsEl.innerHTML = d.by_site.map((s, i) => {
+      const pct = Math.round(s.count / max * 100);
+      return `<div class="sbar">
+        <div class="sbar-row">
+          <span class="sbar-name">${s.site}</span>
+          <span class="sbar-num">${s.count} jobs</span>
+        </div>
+        <div class="track">
+          <div class="fill ${colors[i % colors.length]}" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  const chartEl = document.getElementById('chart');
+  if (!d.daily.length) {
+    chartEl.innerHTML = '<div class="empty" style="width:100%"><div class="empty-icon">📈</div>No data yet</div>';
+  } else {
+    const maxD = Math.max(...d.daily.map(x => x.count), 1);
+    chartEl.innerHTML = d.daily.map(x => {
+      const h = Math.max(Math.round(x.count / maxD * 100), 4);
+      return `<div class="bar-col">
+        <div class="bar-col-fill" style="height:${h}px" title="${x.day}: ${x.count} applications"></div>
+        <div class="bar-col-label">${x.day.slice(5)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  allRows = d.recent;
+  renderDatewise(d.datewise || []);
+  renderTable(allRows);
+}
+
+function renderDatewise(data) {
+  const wrap = document.getElementById('datewiseWrap');
+  const totalEl = document.getElementById('datewiseTotal');
+  if (!data.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">📅</div>No data yet.</div>';
+    totalEl.textContent = '';
+    return;
+  }
+  totalEl.textContent = `${data.length} days tracked`;
+
+  wrap.innerHTML = `<table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Total</th>
+        <th>Naukri</th>
+        <th>LinkedIn</th>
+        <th>Indeed</th>
+        <th>Other</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${data.map(r => {
+        const naukri   = r.sites['Naukri'] || 0;
+        const linkedin = r.sites['LinkedIn'] || r.sites['LinkedIn-Post'] || 0;
+        const indeed   = r.sites['Indeed'] || 0;
+        const other    = r.total - naukri - linkedin - indeed;
+        const today2 = new Date();
+        const todayLocal = `${today2.getFullYear()}-${String(today2.getMonth()+1).padStart(2,'0')}-${String(today2.getDate()).padStart(2,'0')}`;
+        const isToday  = r.day === todayLocal;
+        return `<tr style="${isToday ? 'background:var(--green-bg)' : ''}">
+          <td><span class="time-text" style="font-size:12px;color:${isToday?'var(--green)':'var(--text)'};font-weight:${isToday?'600':'400'}">${r.day}${isToday?' 🟢':''}</span></td>
+          <td><strong style="font-family:'Geist Mono',monospace;font-size:14px">${r.total}</strong></td>
+          <td>${naukri   ? `<span class="badge badge-naukri">${naukri}</span>`   : '<span style="color:var(--muted)">—</span>'}</td>
+          <td>${linkedin ? `<span class="badge badge-linkedin">${linkedin}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+          <td>${indeed   ? `<span class="badge badge-indeed">${indeed}</span>`   : '<span style="color:var(--muted)">—</span>'}</td>
+          <td>${other > 0 ? `<span class="badge badge-other">${other}</span>`   : '<span style="color:var(--muted)">—</span>'}</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+}
+
+function renderTable(rows) {
+  const wrap = document.getElementById('tableWrap');
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>No applications yet.</div>';
+    return;
+  }
+  wrap.innerHTML = `<table>
+    <thead>
+      <tr>
+        <th>Site</th>
+        <th>Job Title</th>
+        <th>Company</th>
+        <th>Location</th>
+        <th>Status</th>
+        <th>Applied At</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows.map(r => `<tr>
+        <td><span class="badge ${siteBadge(r.site)}">${r.site || '—'}</span></td>
+        <td><div class="job-title" title="${esc(r.job_title)}">${esc(r.job_title) || '—'}</div></td>
+        <td><span class="company-name">${esc(r.company) || '—'}</span></td>
+        <td><span class="location-name">${esc(r.location) || '—'}</span></td>
+        <td><span class="badge badge-${r.status || 'applied'}">${r.status || 'applied'}</span></td>
+        <td><span class="time-text">${fmtDate(r.applied_at)}</span></td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+// Filtering
+function filterTable() {
+  const q = document.getElementById('search').value.toLowerCase();
+  if (!q) { renderTable(allRows); return; }
+  renderTable(allRows.filter(r =>
+    (r.job_title || '').toLowerCase().includes(q) ||
+    (r.company   || '').toLowerCase().includes(q) ||
+    (r.site      || '').toLowerCase().includes(q) ||
+    (r.location  || '').toLowerCase().includes(q)
+  ));
+}
+
+function renderLogs(lines, date) {
+  const box = document.getElementById('logBox');
+  if (!lines || !lines.length) {
+    box.innerHTML = `<div class="ll">No logs found for ${date || 'today'}.</div>`;
+    return;
+  }
+  const header = `<div style="color:var(--muted);margin-bottom:6px;font-size:10px;letter-spacing:.5px">── ${date || 'TODAY'} ── ${lines.length} lines ──</div>`;
+  box.innerHTML = header + lines.map(l => {
+    let c = 'll';
+    if      (l.includes('SUCCESS') || l.includes('Applied →')) c = 'ls';
+    else if (l.includes('ERROR'))   c = 'le';
+    else if (l.includes('WARNING')) c = 'lw';
+    else if (l.includes('INFO'))    c = 'li';
+    return `<div class="${c}">${esc(l)}</div>`;
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+}
+
+function updateUI(r) {
+  // Just update UI elements — don't touch polls
+  running = r;
+  const pill   = document.getElementById('statusPill');
+  const dot    = document.getElementById('dot');
+  const stText = document.getElementById('statusText');
+  const btnS   = document.getElementById('btnStart');
+  const btnX   = document.getElementById('btnStop');
+  if (r) {
+    pill.className = 'status-pill running';
+    dot.className  = 'dot running';
+    stText.textContent = 'Running';
+    btnS.disabled = true;
+    btnX.disabled = false;
+  } else {
+    pill.className = 'status-pill idle';
+    dot.className  = 'dot';
+    stText.textContent = 'Idle';
+    btnS.disabled = false;
+    btnX.disabled = true;
+  }
+}
+
+function setRunning(r) {
+  updateUI(r);
+  if (r) {
+    clearInterval(logPoll);
+    logPoll = setInterval(() => fetchLogs(document.getElementById('logDateSel').value), 3000);
+  } else {
+    clearInterval(logPoll);
+    fetchStats(); fetchLogs();
+  }
+}
+
+function set(id, val) { document.getElementById(id).textContent = val; }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(s) {
+  if (!s) return '—';
+  return s.slice(0,16).replace('T',' ');
+}
+function siteBadge(site) {
+  if (!site) return 'badge-other';
+  const s = site.toLowerCase();
+  if (s.includes('naukri'))   return 'badge-naukri';
+  if (s.includes('linkedin')) return 'badge-linkedin';
+  if (s.includes('indeed'))   return 'badge-indeed';
+  return 'badge-other';
+}
+
+// ── Init — sync status immediately then keep polling ──────────────────────────
+(async function init() {
+  // First check if bot is already running (e.g. page refresh while bot runs)
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    if (d.status === 'running') {
+      setRunning(true);
+      document.getElementById('runMsg').textContent = `Running  •  PID ${d.pid || '?'}`;
+    } else {
+      setRunning(false);
+    }
+  } catch(e) {}
+
+  // Load data
+  fetchStats();
+  fetchLogs();
+
+  // Keep polling every 2 seconds
+  poll = setInterval(() => { fetchStats(); fetchStatus(); }, 2000);
+})();
+</script>
+</body>
+</html>
