@@ -49,7 +49,7 @@ async def get_job_links(page):
     links = []
     selectors = [
         "a.title",
-        ".srp-jobtuple-container a.title",  # Updated target context wrapper variant
+        ".srp-jobtuple-container a.title",  
         "article.jobTuple a.title",
         ".srp-jobtuple-wrapper a.title",
         ".cust-job-tuple a.title",
@@ -111,7 +111,7 @@ async def apply_to_job(context, job_url, title):
         if is_stopped():
             return False
 
-        # --- CRITICAL FIX 1: LIQUIDATE POINTER-BLOCKING CHATBOT OVERLAYS ---
+        # --- LIQUIDATE POINTER-BLOCKING CHATBOT OVERLAYS ---
         try:
             await job_page.evaluate("""() => {
                 const elementsToDestroy = [
@@ -132,7 +132,7 @@ async def apply_to_job(context, job_url, title):
             logger.warning(f"Login required for '{title}' — skipping.")
             return False
 
-        # --- CRITICAL FIX: EXTRACT COMPANY NAME FIRST BEFORE APPLYING ---
+        # --- EXTRACT COMPANY NAME ---
         company = "Unknown"
         company_selectors = [
             ".jd-header-comp-name a",
@@ -149,7 +149,6 @@ async def apply_to_job(context, job_url, title):
                 el = await job_page.query_selector(comp_sel)
                 if el:
                     text = (await el.inner_text()).strip()
-                    # Clean up reviews string if attached (e.g. "Google 4.2 (120 Reviews)" -> "Google")
                     text = re.sub(r'\d+\.\d+\s*\(.*\)', '', text).strip()
                     if text:
                         company = text
@@ -233,9 +232,9 @@ async def apply_to_job(context, job_url, title):
         # --- ADVANCED ROBUST APPLY BUTTON EXTRACTION ENGINE ---
         apply_btn = None
         apply_selectors = [
-            "button.styles_btn__KzI_x",                  # Modern layout design system core button footprint
-            "[class*='styles_btn__']",                     # Partial design footprint string match
-            "button:has-text('Apply on company site')",   # Catching external apply endpoints
+            "button.styles_btn__KzI_x",                  
+            "[class*='styles_btn__']",
+            "button:has-text('Apply on company site')",
             "button#apply-button",
             "button.apply-button", 
             "a#apply-button",
@@ -279,15 +278,14 @@ async def apply_to_job(context, job_url, title):
             logger.info(f"No valid apply button found for '{title}' — skipping.")
             return False
 
-        # Attempt structural click
         await apply_btn.scroll_into_view_if_needed()
         await asyncio.sleep(0.5)
         
-        # --- CRITICAL FIX 2: FORCE INTERACTION TO BYPASS REMAINING POINTER INTERCEPTIONS ---
+        # FORCE INTERACTION TO BYPASS INTERCEPTIONS
         await apply_btn.click(force=True)
         await asyncio.sleep(4)
 
-        # --- DYNAMIC POST-CLICK MODAL OVERLAY WRAPPER PROCESSING ---
+        # --- DYNAMIC POST-CLICK MODAL OVERLAY PROCESSING ---
         for step in range(3):
             confirm_btn = await job_page.query_selector(
                 "button:has-text('Apply'), button:has-text('Submit'), button:has-text('Confirm'), "
@@ -324,7 +322,6 @@ async def apply_to_job(context, job_url, title):
                 pass
 
 
-# asyncio Event — set when browser is closed by user
 _stop_event = None
 
 def is_stopped():
@@ -365,7 +362,13 @@ async def run_naukri(config):
     keywords = config["job_search"]["keywords"]
     
     experience = config["job_search"].get("experience_years", 0) 
-    job_keywords_lower = [k.lower() for k in keywords]
+
+    # --- CORE TECHNOLOGY ATOM TOKENS ---
+    # This prevents the bot from missing valid variations like "Cloud & DevOps" or "AWS/Devops"
+    core_tech_tokens = [
+        "devops", "cloud", "infrastructure", "ci/cd", "release", "linux", "system reliability",
+        "aws", "azure", "gcp", "docker", "terraform", "platform", "sre", "kubernetes", "ansible"
+    ]
 
     pw, browser, context, page = await launch_browser(config, site="naukri")
 
@@ -430,26 +433,31 @@ async def run_naukri(config):
 
                     title = job["title"]
                     job_url = job["url"]
+                    title_lower = title.lower()
 
-                    if not any(kw in title.lower() for kw in job_keywords_lower):
+                    # --- FIX: DYNAMIC ACCURATE WORD FILTERING ---
+                    if not any(token in title_lower for token in core_tech_tokens):
+                        logger.info(f"  ↳ Skip: '{title}' is not related to your domain.")
                         continue
 
                     if already_applied(job_url):
+                        logger.info(f"  ↳ Skip: Already processed '{title}' (In DB history).")
                         continue
 
                     if keyword_match(title, skip_kws):
-                        logger.info(f"Skipping '{title}' — matched skip keyword from config.")
+                        logger.info(f"  ↳ Skip: '{title}' matched config negative terms.")
                         continue
 
-                    title_lower = title.lower()
                     senior_words = [
                         "senior", "sr.", "lead", "principal", "manager", "architect", 
                         "ii", "iii", "iv", "head", "director", "expert", "consultant"
                     ]
                     if any(f" {w} " in f" {title_lower} " or title_lower.startswith(w) for w in senior_words):
-                        logger.info(f"Skipping '{title}' — contains senior experience indicators.")
+                        logger.info(f"  ↳ Skip: '{title}' contains senior restrictions.")
                         continue
 
+                    # Passes filters -> Let's process the application
+                    logger.info(f"🎯 Processing target match: '{title}'...")
                     try:
                         success = await apply_to_job(context, job_url, title)
                     except Exception as e:
