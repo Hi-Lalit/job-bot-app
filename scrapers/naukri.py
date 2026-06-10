@@ -49,6 +49,7 @@ async def get_job_links(page):
     links = []
     selectors = [
         "a.title",
+        ".srp-jobtuple-container a.title",  # Updated target context wrapper variant
         "article.jobTuple a.title",
         ".srp-jobtuple-wrapper a.title",
         ".cust-job-tuple a.title",
@@ -109,6 +110,23 @@ async def apply_to_job(context, job_url, title):
 
         if is_stopped():
             return False
+
+        # --- CRITICAL FIX 1: LIQUIDATE POINTER-BLOCKING CHATBOT OVERLAYS ---
+        try:
+            await job_page.evaluate("""() => {
+                const elementsToDestroy = [
+                    '.chatbot_Overlay', 
+                    '._chatBotContainer', 
+                    '[id*="chatbot"]', 
+                    '[class*="chatbot"]', 
+                    '[id*="Chatbot"]'
+                ];
+                elementsToDestroy.forEach(selector => {
+                    document.querySelectorAll(selector).forEach(el => el.remove());
+                });
+            }""")
+        except Exception as e:
+            logger.debug(f"Non-critical issue stripping overlays: {e}")
 
         if await is_login_page(job_page):
             logger.warning(f"Login required for '{title}' — skipping.")
@@ -215,6 +233,9 @@ async def apply_to_job(context, job_url, title):
         # --- ADVANCED ROBUST APPLY BUTTON EXTRACTION ENGINE ---
         apply_btn = None
         apply_selectors = [
+            "button.styles_btn__KzI_x",                  # Modern layout design system core button footprint
+            "[class*='styles_btn__']",                     # Partial design footprint string match
+            "button:has-text('Apply on company site')",   # Catching external apply endpoints
             "button#apply-button",
             "button.apply-button", 
             "a#apply-button",
@@ -261,7 +282,9 @@ async def apply_to_job(context, job_url, title):
         # Attempt structural click
         await apply_btn.scroll_into_view_if_needed()
         await asyncio.sleep(0.5)
-        await apply_btn.click()
+        
+        # --- CRITICAL FIX 2: FORCE INTERACTION TO BYPASS REMAINING POINTER INTERCEPTIONS ---
+        await apply_btn.click(force=True)
         await asyncio.sleep(4)
 
         # --- DYNAMIC POST-CLICK MODAL OVERLAY WRAPPER PROCESSING ---
@@ -271,7 +294,7 @@ async def apply_to_job(context, job_url, title):
                 "button.submit-btn, .chatbot-container button:has-text('Next')"
             )
             if confirm_btn and await confirm_btn.is_visible():
-                await confirm_btn.click()
+                await confirm_btn.click(force=True)
                 await asyncio.sleep(2)
             else:
                 break
@@ -279,7 +302,7 @@ async def apply_to_job(context, job_url, title):
         try:
             skip_quiz = await job_page.query_selector("button:has-text('Skip'), .skip-btn")
             if skip_quiz and await skip_quiz.is_visible():
-                await skip_quiz.click()
+                await skip_quiz.click(force=True)
                 await asyncio.sleep(1)
         except Exception:
             pass
