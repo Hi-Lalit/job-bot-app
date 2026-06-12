@@ -1,7 +1,0 @@
-2026/05/25-09:25:31.677 18a3 Creating DB /home/lalit/Projects/job-bot/user_data/Default/WebStorage/13/IndexedDB/indexeddb.leveldb since it was missing.
-2026/05/25-09:25:31.684 18a3 Reusing MANIFEST /home/lalit/Projects/job-bot/user_data/Default/WebStorage/13/IndexedDB/indexeddb.leveldb/MANIFEST-000001
-2026/05/25-09:25:31.701 18af Manual compaction at level-0 from '\x00\x01\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x02\x00\x00\x00' @ 0 : 0; will stop at (end)
-2026/05/25-09:26:16.536 18a4 Level-0 table #5: started
-2026/05/25-09:26:16.539 18a4 Level-0 table #5: 4771 bytes OK
-2026/05/25-09:26:16.542 18a4 Delete type=0 #3
-2026/05/25-09:26:16.542 18a4 Manual compaction at level-0 from '\x00\x04\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x05\x00\x00\x00' @ 0 : 0; will stop at (end)
