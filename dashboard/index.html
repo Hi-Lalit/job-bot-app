@@ -26,6 +26,8 @@
   --purple-bg:  #ede9fe;
   --red:        #dc2626;
   --red-bg:     #fee2e2;
+  --cyan:       #0891b2;
+  --cyan-bg:    #cffafe;
   --shadow:     0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
   --shadow-md:  0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.05);
   
@@ -51,6 +53,8 @@
   --purple-bg:  #581c87;
   --red:        #f87171;
   --red-bg:     #7f1d1d;
+  --cyan:       #22d3ee;
+  --cyan-bg:    #164e63;
   --shadow:     0 2px 4px rgba(0,0,0,.3);
 }
 
@@ -73,6 +77,8 @@
   --purple-bg:  #2a003a;
   --red:        #ff0055;
   --red-bg:     #3a0012;
+  --cyan:       #00ffff;
+  --cyan-bg:    #005555;
   --shadow:     0 0 8px rgba(255, 0, 127, 0.4);
 }
 
@@ -95,6 +101,8 @@
   --purple-bg:  #342644;
   --red:        #ff5555;
   --red-bg:     #3d1f1f;
+  --cyan:       #8be9fd;
+  --cyan-bg:    #193a40;
   --shadow:     0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
@@ -350,6 +358,7 @@ select:focus { border-color: var(--blue); }
 .fill-blue   { background: var(--blue); }
 .fill-orange { background: var(--orange); }
 .fill-purple { background: var(--purple); }
+.fill-cyan    { background: var(--cyan); }
 .fill-gray   { background: var(--muted); }
 
 /* ── Chart ───────────────────────────────────────────────── */
@@ -472,12 +481,13 @@ tbody tr:hover td { background: rgba(0, 0, 0, 0.02); }
   border-radius: 6px;
   white-space: nowrap;
 }
-.badge-naukri   { background: var(--green-bg);  color: var(--green); }
-.badge-linkedin { background: var(--blue-bg);   color: var(--blue); }
-.badge-indeed   { background: var(--orange-bg); color: var(--orange); }
-.badge-other    { background: var(--bg);        color: var(--sub); border: 1px solid var(--border2); }
-.badge-applied  { background: var(--green-bg);  color: var(--green); }
-.badge-skipped  { background: var(--bg);        color: var(--sub); border: 1px solid var(--border2); }
+.badge-naukri    { background: var(--green-bg);  color: var(--green); }
+.badge-linkedin  { background: var(--blue-bg);   color: var(--blue); }
+.badge-indeed    { background: var(--orange-bg); color: var(--orange); }
+.badge-instahyre { background: var(--cyan-bg);   color: var(--cyan); }
+.badge-other     { background: var(--bg);        color: var(--sub); border: 1px solid var(--border2); }
+.badge-applied   { background: var(--green-bg);  color: var(--green); }
+.badge-skipped   { background: var(--bg);        color: var(--sub); border: 1px solid var(--border2); }
 
 /* ── Empty state ─────────────────────────────────────────── */
 .empty {
@@ -582,6 +592,7 @@ tbody tr:hover td { background: rgba(0, 0, 0, 0.02); }
         <option value="linkedin">LinkedIn Easy Apply</option>
         <option value="linkedin-posts">LinkedIn Posts</option>
         <option value="indeed">Indeed</option>
+        <option value="instahyre">Instahyre</option>
         <option value="all">All Sites</option>
       </select>
     </div>
@@ -635,7 +646,6 @@ tbody tr:hover td { background: rgba(0, 0, 0, 0.02); }
     </div>
   </div>
 
-  <!-- Date-wise breakdown -->
   <div class="table-card" style="margin-bottom:18px">
     <div class="table-head">
       <div class="table-head-title">📅 Applications by Date</div>
@@ -782,7 +792,8 @@ function renderStats(d) {
   if (!d.by_site.length) {
     barsEl.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>No data yet</div>';
   } else {
-    const colors = ['fill-green','fill-blue','fill-orange','fill-purple','fill-gray'];
+    // Added fill-cyan for instahyre styling in the bar graph
+    const colors = ['fill-green','fill-blue','fill-orange','fill-cyan','fill-purple','fill-gray'];
     barsEl.innerHTML = d.by_site.map((s, i) => {
       const pct = Math.round(s.count / max * 100);
       return `<div class="sbar">
@@ -834,25 +845,28 @@ function renderDatewise(data) {
         <th>Naukri</th>
         <th>LinkedIn</th>
         <th>Indeed</th>
+        <th>Instahyre</th>
         <th>Other</th>
       </tr>
     </thead>
     <tbody>
       ${data.map(r => {
-        const naukri   = r.sites['Naukri'] || 0;
-        const linkedin = r.sites['LinkedIn'] || r.sites['LinkedIn-Post'] || 0;
-        const indeed   = r.sites['Indeed'] || 0;
-        const other    = r.total - naukri - linkedin - indeed;
+        const naukri    = r.sites['Naukri'] || 0;
+        const linkedin  = r.sites['LinkedIn'] || r.sites['LinkedIn-Post'] || 0;
+        const indeed    = r.sites['Indeed'] || 0;
+        const instahyre = r.sites['Instahyre'] || 0;
+        const other     = r.total - naukri - linkedin - indeed - instahyre;
         const today2 = new Date();
         const todayLocal = `${today2.getFullYear()}-${String(today2.getMonth()+1).padStart(2,'0')}-${String(today2.getDate()).padStart(2,'0')}`;
         const isToday  = r.day === todayLocal;
         return `<tr style="${isToday ? 'background:var(--green-bg)' : ''}">
           <td><span class="time-text" style="font-size:12px;color:${isToday?'var(--green)':'var(--text)'};font-weight:${isToday?'600':'400'}">${r.day}${isToday?' 🟢':''}</span></td>
           <td><strong style="font-family:'Geist Mono',monospace;font-size:14px">${r.total}</strong></td>
-          <td>${naukri   ? `<span class="badge badge-naukri">${naukri}</span>`   : '<span style="color:var(--muted)">—</span>'}</td>
-          <td>${linkedin ? `<span class="badge badge-linkedin">${linkedin}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
-          <td>${indeed   ? `<span class="badge badge-indeed">${indeed}</span>`   : '<span style="color:var(--muted)">—</span>'}</td>
-          <td>${other > 0 ? `<span class="badge badge-other">${other}</span>`   : '<span style="color:var(--muted)">—</span>'}</td>
+          <td>${naukri    ? `<span class="badge badge-naukri">${naukri}</span>`       : '<span style="color:var(--muted)">—</span>'}</td>
+          <td>${linkedin  ? `<span class="badge badge-linkedin">${linkedin}</span>`   : '<span style="color:var(--muted)">—</span>'}</td>
+          <td>${indeed    ? `<span class="badge badge-indeed">${indeed}</span>`       : '<span style="color:var(--muted)">—</span>'}</td>
+          <td>${instahyre ? `<span class="badge badge-instahyre">${instahyre}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+          <td>${other > 0 ? `<span class="badge badge-other">${other}</span>`         : '<span style="color:var(--muted)">—</span>'}</td>
         </tr>`;
       }).join('')}
     </tbody>
@@ -962,9 +976,10 @@ function fmtDate(s) {
 function siteBadge(site) {
   if (!site) return 'badge-other';
   const s = site.toLowerCase();
-  if (s.includes('naukri'))   return 'badge-naukri';
-  if (s.includes('linkedin')) return 'badge-linkedin';
-  if (s.includes('indeed'))   return 'badge-indeed';
+  if (s.includes('naukri'))    return 'badge-naukri';
+  if (s.includes('linkedin'))  return 'badge-linkedin';
+  if (s.includes('indeed'))    return 'badge-indeed';
+  if (s.includes('instahyre')) return 'badge-instahyre';
   return 'badge-other';
 }
 

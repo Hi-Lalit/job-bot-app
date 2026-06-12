@@ -1,14 +1,5 @@
 """
 Job Application Bot — Main Entry Point
-=======================================
-Run:  python3 main.py --site naukri
-      python3 main.py --site linkedin
-      python3 main.py --site all
-
-      to kill port: fuser -k 8000/tcp
-
-Browser opens ONCE using a persistent profile folder.
-The first time, you login manually. Subsequent runs will bypass login automatically.
 """
 
 import asyncio
@@ -22,10 +13,10 @@ logger.remove()
 logger.add(sys.stdout, format="<green>{time:HH:mm:ss}</green> | <level>{level:<8}</level> | {message}", colorize=True)
 logger.add("logs/bot_{time:YYYY-MM-DD}.log", rotation="1 day", retention="7 days")
 
-
 async def run_all(config, sites):
     total = 0
 
+    # Lazy imports ensure we don't load modules unless we need them
     if "naukri" in sites:
         from scrapers.naukri import run_naukri
         logger.info("===== Starting Naukri =====")
@@ -50,14 +41,20 @@ async def run_all(config, sites):
         count = await run_indeed(config)
         total += count
 
-    return total
+    if "instahyre" in sites:
+        # We only call run_instahyre, which manages its own internal login logic
+        from scrapers.instahyre import run_instahyre
+        logger.info("===== Starting Instahyre =====")
+        count = await run_instahyre(config)
+        total += count
 
+    return total
 
 def main():
     parser = argparse.ArgumentParser(description="Job Application Bot")
     parser.add_argument(
         "--site",
-        choices=["naukri", "linkedin", "linkedin-posts", "indeed", "all"],
+        choices=["naukri", "linkedin", "linkedin-posts", "indeed", "instahyre", "all"],
         default="all",
         help="Which site to run (default: all)"
     )
@@ -66,11 +63,10 @@ def main():
     config = load_config()
     init_db()
 
-    sites = ["naukri", "linkedin", "indeed"] if args.site == "all" else [args.site]
+    sites = ["naukri", "linkedin", "linkedin-posts", "indeed", "instahyre"] if args.site == "all" else [args.site]
 
     logger.info(f"Starting bot for: {', '.join(sites)}")
     logger.info(f"Max applications per run: {config['filters']['max_applications_per_run']}")
-    logger.info("Browser profile directory tracking is active. Saved sessions will auto-restore.")
     logger.info("Press Ctrl+C at any time to stop.")
 
     try:
@@ -81,7 +77,7 @@ def main():
     except Exception as e:
         logger.error(f"Bot crashed: {e}")
     finally:
-        # Crucial: Run async cleanup loop cleanly to save cookies to disk
+        # Cleanup routine
         try:
             loop = asyncio.get_event_loop()
         except RuntimeError:
@@ -94,7 +90,6 @@ def main():
             loop.run_until_complete(close_shared_browser())
             
         print_summary()
-
 
 if __name__ == "__main__":
     main()

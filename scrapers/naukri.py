@@ -19,11 +19,19 @@ async def login_naukri(page):
 
     for i in range(36):  # 36 x 5sec = 3 minutes
         await asyncio.sleep(5)
-        current_url = page.url
-        if "login" not in current_url and "naukri.com" in current_url:
+        
+        # Updated Naukri login detection logic
+        profile = await page.query_selector(
+            "[class*='profile'],"
+            "[class*='userName'],"
+            "a[href*='mnjuser']"
+        )
+
+        if profile:
             logger.success("Naukri login detected! Continuing...")
             await asyncio.sleep(2)
             return True
+
         if i % 6 == 0 and i > 0:
             remaining = (36 - i) * 5
             logger.info(f"Still waiting for login... ({remaining}s remaining)")
@@ -73,7 +81,18 @@ async def get_job_links(page):
 
     if not links:
         logger.warning("No job links found — Naukri may have changed layout.")
-    return links
+        return []
+
+    # Filter unique links
+    seen = set()
+    unique_links = []
+
+    for job in links:
+        if job["url"] not in seen:
+            seen.add(job["url"])
+            unique_links.append(job)
+
+    return unique_links
 
 
 async def is_login_page(page):
@@ -131,6 +150,38 @@ async def apply_to_job(context, job_url, title):
         if await is_login_page(job_page):
             logger.warning(f"Login required for '{title}' — skipping.")
             return False
+
+        # --- DEVOPS SKILL SCORING ---
+        DEVOPS_SKILLS = [
+            "aws",
+            "azure",
+            "gcp",
+            "docker",
+            "kubernetes",
+            "terraform",
+            "linux",
+            "ansible",
+            "jenkins",
+            "gitlab"
+        ]
+
+        try:
+            page_text = (
+                await job_page.locator("body").inner_text()
+            ).lower()
+
+            score = sum(
+                1
+                for skill in DEVOPS_SKILLS
+                if skill in page_text
+            )
+
+            if score < 2:
+                logger.info(f"Skip '{title}' (low DevOps skill score: {score})")
+                return False
+
+        except Exception:
+            pass
 
         # --- EXTRACT COMPANY NAME ---
         company = "Unknown"
@@ -193,22 +244,23 @@ async def apply_to_job(context, job_url, title):
             plus_match = re.search(r'(\d+)\s*\+', job_exp_text)
             single_match = re.search(r'\b(\d+)\s*(?:yrs|years|Yrs)', job_exp_text, re.IGNORECASE)
 
+            MAX_ALLOWED_EXP = 2
+
             if range_match:
                 min_exp = int(range_match.group(1))
-                max_exp = int(range_match.group(2))
-                if min_exp >= 2 or max_exp > 2:
-                    logger.warning(f"Skipping '{title}' — Experience requirement too high: '{range_match.group(0)} Yrs'")
+                if min_exp > MAX_ALLOWED_EXP:
+                    logger.warning(f"Skipping '{title}' — requires minimum {min_exp} years experience.")
                     return False
             elif plus_match:
                 val = int(plus_match.group(1))
-                if val >= 2:  
-                    logger.warning(f"Skipping '{title}' — Experience requirement too high: '{plus_match.group(0)} Yrs'")
+                if val > MAX_ALLOWED_EXP:
+                    logger.warning(f"Skipping '{title}' — requires {val}+ years.")
                     return False
             elif single_match:
                 val = int(single_match.group(1))
-                if val >= 2:
-                    logger.warning(f"Skipping '{title}' — Experience requirement too high: '{single_match.group(0)}'")
-                    return False
+                if val > MAX_ALLOWED_EXP:
+                    logger.warning(f"Skipping '{title}' — requires {val} years.")
+                    return False                    
 
         # --- MANDATORY REMOTE/WFH ELIMINATION CHECK ---
         location_text = ""
@@ -259,6 +311,27 @@ async def apply_to_job(context, job_url, title):
             except Exception:
                 continue
 
+        # Fallback button checking based on user requirements
+        if not apply_btn:
+            buttons = await job_page.query_selector_all("button,a")
+            for btn in buttons:
+                try:
+                    txt = (await btn.inner_text()).strip().lower()
+                    if (
+                        any(word in txt for word in [
+                            "apply",
+                            "apply now",
+                            "easy apply",
+                            "apply on company site"
+                        ])
+                        and "applied" not in txt
+                    ):
+                        apply_btn = btn
+                        break
+                except Exception:
+                    pass
+
+        # Final evaluation fallback
         if not apply_btn:
             try:
                 apply_btn = await job_page.evaluate_handle(
@@ -284,6 +357,11 @@ async def apply_to_job(context, job_url, title):
         # FORCE INTERACTION TO BYPASS INTERCEPTIONS
         await apply_btn.click(force=True)
         await asyncio.sleep(4)
+
+        # --- EXTERNAL APPLY DETECTION (Moved after button click) ---
+        if "naukri.com" not in job_page.url:
+            logger.info(f"External Apply Detected: {job_page.url}")
+            return False
 
         # --- DYNAMIC POST-CLICK MODAL OVERLAY PROCESSING ---
         for step in range(3):
@@ -327,6 +405,7 @@ _stop_event = None
 def is_stopped():
     return _stop_event is not None and _stop_event.is_set()
 
+
 async def sleep_or_stop(seconds):
     if _stop_event is None:
         await asyncio.sleep(seconds)
@@ -335,6 +414,7 @@ async def sleep_or_stop(seconds):
         await asyncio.wait_for(_stop_event.wait(), timeout=seconds)
     except asyncio.TimeoutError:
         pass
+
 
 async def get_fresh_page(context):
     if is_stopped():
@@ -364,10 +444,32 @@ async def run_naukri(config):
     experience = config["job_search"].get("experience_years", 0) 
 
     # --- CORE TECHNOLOGY ATOM TOKENS ---
-    # This prevents the bot from missing valid variations like "Cloud & DevOps" or "AWS/Devops"
     core_tech_tokens = [
-        "devops", "cloud", "infrastructure", "ci/cd", "release", "linux", "system reliability",
-        "aws", "azure", "gcp", "docker", "terraform", "platform", "sre", "kubernetes", "ansible"
+        "devops",
+        "cloud",
+        "platform",
+        "infrastructure",
+        "site reliability",
+        "sre",
+        "linux",
+        "aws",
+        "azure",
+        "gcp",
+        "docker",
+        "terraform",
+        "kubernetes",
+        "ansible",
+        "jenkins",
+        "gitlab",
+        "cloud engineer",
+        "platform engineer",
+        "linux engineer"        
+        "junior",
+        "cloud support",
+        "operations",
+        "cloud operations",
+        "system engineer",
+        "systems engineer"
     ]
 
     pw, browser, context, page = await launch_browser(config, site="naukri")
@@ -435,8 +537,8 @@ async def run_naukri(config):
                     job_url = job["url"]
                     title_lower = title.lower()
 
-                    # --- FIX: DYNAMIC ACCURATE WORD FILTERING ---
-                    if not any(token in title_lower for token in core_tech_tokens):
+                    # --- SMART DOMAIN MATCHING ---
+                    if not keyword_match(title, core_tech_tokens):
                         logger.info(f"  ↳ Skip: '{title}' is not related to your domain.")
                         continue
 
@@ -444,45 +546,29 @@ async def run_naukri(config):
                         logger.info(f"  ↳ Skip: Already processed '{title}' (In DB history).")
                         continue
 
-                    if keyword_match(title, skip_kws):
-                        logger.info(f"  ↳ Skip: '{title}' matched config negative terms.")
+                    if any(skip_kw.lower() in title_lower for skip_kw in skip_kws):
+                        logger.info(f"  ↳ Skip: '{title}' contains senior/excluded keyword restriction rules.")
                         continue
 
-                    senior_words = [
-                        "senior", "sr.", "lead", "principal", "manager", "architect", 
-                        "ii", "iii", "iv", "head", "director", "expert", "consultant"
-                    ]
-                    if any(f" {w} " in f" {title_lower} " or title_lower.startswith(w) for w in senior_words):
-                        logger.info(f"  ↳ Skip: '{title}' contains senior restrictions.")
-                        continue
-
-                    # Passes filters -> Let's process the application
-                    logger.info(f"🎯 Processing target match: '{title}'...")
-                    try:
-                        success = await apply_to_job(context, job_url, title)
-                    except Exception as e:
-                        if is_stopped():
-                            done = True
-                            break
-                        logger.error(f"Error applying to '{title}': {e}")
-                        page = await get_fresh_page(context)
-                        if not page:
-                            done = True
-                            break
-                        continue
-
+                    # Forward to processing automation track engine
+                    success = await apply_to_job(context, job_url, title)
                     if success:
                         applied_count += 1
-                        logger.success(f"[{applied_count}/{max_apps}] Applied → {title}")
+                        
+                        await sleep_or_stop(random.uniform(8, 15))
 
-                    delay = config["bot"]["delay_between_jobs_sec"]
-                    await sleep_or_stop(random.uniform(delay, delay + 2))
+                        if applied_count % 10 == 0:
+                            logger.info("Cooling down for anti-ban safety...")
+                            await sleep_or_stop(random.uniform(60, 120))
 
+        return applied_count
+
+    except Exception as e:
+        logger.error(f"Critical breakdown in run_naukri loop workflow: {e}")
+        return applied_count
     finally:
         try:
-            await page.close()
+            await browser.close()
+            await pw.stop()
         except Exception:
             pass
-
-    logger.info(f"Naukri done. Applied to {applied_count} jobs.")
-    return applied_count

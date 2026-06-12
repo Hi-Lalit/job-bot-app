@@ -32,6 +32,11 @@ def load_config():
     config["credentials"]["naukri"]["password"]   = os.getenv("NAUKRI_PASSWORD", "")
     config["credentials"]["indeed"]["email"]      = os.getenv("INDEED_EMAIL", "")
     config["credentials"]["indeed"]["password"]   = os.getenv("INDEED_PASSWORD", "")
+    
+    # --- ADDED INSTAHYRE CREDENTIALS ---
+    config["credentials"].setdefault("instahyre", {})
+    config["credentials"]["instahyre"]["email"]    = os.getenv("INSTAHYRE_EMAIL", "")
+    config["credentials"]["instahyre"]["password"] = os.getenv("INSTAHYRE_PASSWORD", "")
 
     config["job_search"]["notice_period"]       = int(os.getenv("NOTICE_PERIOD", config["job_search"].get("notice_period", 0)))
     config["job_search"]["willing_to_relocate"] = os.getenv("WILLING_TO_RELOCATE", "Yes").lower() in ("yes", "true", "1")
